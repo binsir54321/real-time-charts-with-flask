@@ -87,17 +87,23 @@
 
         const lineChart = new Chart(context, config);
 
-        const source = new EventSource("/chart-data");
+        const source = new EventSource("http://127.0.0.1:5000/chart-data");
 
         source.onmessage = function (event) {
-            const data = JSON.parse(event.data);
-            if (config.data.labels.length === 30) {
-                config.data.labels.shift();
-                config.data.datasets[0].data.shift();
+            if(event.data == '[DONE]'){
+                source.close()
+                return
             }
-            config.data.labels.push(data.time);
-            config.data.datasets[0].data.push(data.value);
-            lineChart.update();
+            // const data = JSON.parse(event.data);
+            
+            console.log(event.data)
+            // if (config.data.labels.length === 30) {
+            //     config.data.labels.shift();
+            //     config.data.datasets[0].data.shift();
+            // }
+            // config.data.labels.push(data.time);
+            // config.data.datasets[0].data.push(data.value);
+            // lineChart.update();
         }
     });
 </script>

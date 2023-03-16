@@ -5,13 +5,20 @@ import sys
 import time
 from datetime import datetime
 from typing import Iterator
+import requests
+import openai
 
-from flask import Flask, Response, render_template, request, stream_with_context
+from flask import Flask, Response, render_template, request, stream_with_context, jsonify
+from flask_cors import CORS
+
+openai.api_key = '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'
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 application = Flask(__name__)
+
+CORS(application)
 random.seed()  # Initialize the random number generator
 
 
@@ -34,24 +41,38 @@ def generate_random_data() -> Iterator[str]:
     try:
         logger.info("Client %s connected", client_ip)
         while True:
-            json_data = json.dumps(
-                {
-                    "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "value": random.random() * 100,
-                }
-            )
+            json_data = "111"
             yield f"data:{json_data}\n\n"
             time.sleep(1)
     except GeneratorExit:
         logger.info("Client %s disconnected", client_ip)
 
+def chat(completion):
+    # data = request.get_json()
+    
+    for each in completion:
+        if("content" in each.choices[0].delta):
+            yield f"data:{each.choices[0].delta.content}\n\n"
+            print(each.choices[0].delta.content)
+    yield f"data:[DONE]\n\n"
+    return jsonify({'success': True})
 
 @application.route("/chart-data")
 def chart_data() -> Response:
-    response = Response(stream_with_context(generate_random_data()), mimetype="text/event-stream")
+
+    messages = []
+    messages.append({'role': 'user', 'content': '说一个50个字的关于水浒传的介绍'})
+    completion = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        stream=True
+    )
+
+    response = Response(stream_with_context(chat(completion)), mimetype="text/event-stream")
     response.headers["Cache-Control"] = "no-cache"
     response.headers["X-Accel-Buffering"] = "no"
     return response
+
 
 
 if __name__ == "__main__":

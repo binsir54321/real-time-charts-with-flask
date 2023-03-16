@@ -1,7 +1,8 @@
 FROM python:3.11-slim-buster
 LABEL maintainer="ronmarti18@gmail.com"
 
-RUN pip install poetry
+RUN pip install poetry openai
+RUN pip install flask_cors
 
 ENV PYTHONUNBUFFERED=1
 
