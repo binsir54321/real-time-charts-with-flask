@@ -11,7 +11,7 @@ import openai
 from flask import Flask, Response, render_template, request, stream_with_context, jsonify
 from flask_cors import CORS
 
-openai.api_key = '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'
+openai.api_key = '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'
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -59,9 +59,10 @@ def chat(completion):
 
 @application.route("/chart-data")
 def chart_data() -> Response:
-
+    question = request.args.get('question')
+    print(question)
     messages = []
-    messages.append({'role': 'user', 'content': '说一个50个字的关于水浒传的介绍'})
+    messages.append({'role': 'user', 'content': question})
     completion = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages,
