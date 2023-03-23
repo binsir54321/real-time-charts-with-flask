@@ -7,6 +7,7 @@ RUN pip install flask_cors
 ENV PYTHONUNBUFFERED=1
 
 RUN mkdir /code
+RUN mkdir /code/static
 WORKDIR /code
 COPY . /code/
 

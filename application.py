@@ -11,7 +11,7 @@ import openai
 from flask import Flask, Response, render_template, request, stream_with_context, jsonify
 from flask_cors import CORS
 
-openai.api_key = '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'
+openai.api_key = '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'
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -66,6 +66,22 @@ def nochat():
     yield f"data:[DONE]\n\n"
     return jsonify({'success': True})
 
+def zhaohu():
+    # data = request.get_json()
+    
+    yield f"data:小朋友们好呀，很高兴见到你们，我看了你们写的童诗，你们真的好棒呀。\n\n"
+    yield f"data:。\n\n"
+    yield f"data:[DONE]\n\n"
+    return jsonify({'success': True})
+
+def zhidao():
+    # data = request.get_json()
+    
+    yield f"data:我是从顾老师的公众号上了解到的，如果你不知道的话，我可以为你朗读一下。\n\n"
+    yield f"data:。\n\n"
+    yield f"data:[DONE]\n\n"
+    return jsonify({'success': True})
+
 def timeoutchat():
     # data = request.get_json()
     
@@ -80,14 +96,20 @@ def chart_data() -> Response:
     print("question",question)
 
     messages = []
+    
+    
     messages.append({'role': 'user', 'content': '你只会说中文,你的回答中不会出现英文字母和英文单词，你的名字叫小幻'})
-    messages.append({'role': 'user', 'content': '如果让你打招呼，你就说复旦附小二年三班的小朋友们很厉害，你们写的童诗很棒啊。如果问你怎么知道的，你就说你是看了顾老师的公众号了解到的'})
-    messages.append({'role': 'user', 'content': '如果让你朗读什么，你就说：好的'})
     messages.append({'role': 'user', 'content': question})
 
     if(question == ""):
         print(11)
         response = Response(stream_with_context(nochat()), mimetype="text/event-stream")
+    elif("招呼" in question):
+        print(111)
+        response = Response(stream_with_context(zhaohu()), mimetype="text/event-stream")
+    elif("哪里看到的" in question):
+        print(111)
+        response = Response(stream_with_context(zhidao()), mimetype="text/event-stream")
     else:
         print(22)
         try:
@@ -95,16 +117,35 @@ def chart_data() -> Response:
                 model="gpt-3.5-turbo",
                 messages=messages,
                 stream=True,
-                request_timeout=20
+                request_timeout=10
             )
             response = Response(stream_with_context(chat(completion)), mimetype="text/event-stream")
-        except Exception:
-            print("Cannot divide by zero")
+        except Exception as e:
+            print(e)
             response = Response(stream_with_context(timeoutchat()), mimetype="text/event-stream")
     response.headers["Cache-Control"] = "no-cache"
     response.headers["X-Accel-Buffering"] = "no"
     return response
 
+@application.route('/api/getdraw',methods=['POST'])
+def askchatgpt():
+    data =request.get_data()
+    datajson = json.loads(data)
+    question = datajson['question']
+    print("question",question)
+    if(question == ""):
+        print(11)
+        response = {"code":200,"url":f"http://127.0.0.1:5000/static/{question}.png","text":f"我没听到要画什么"}
+    response = openai.Image.create(
+        prompt=question,
+        n=1,
+        size="512x512")
+    print(response)
+    r = requests.get(response['data'][0]['url'])
+    with open(f'./static/{question}.png','wb') as f:
+        f.write(r.content)
+        f.close()
+    return {"code":200,"url":f"http://127.0.0.1:5000/static/{question}.png","text":f"请看我画的：{question}"}
 
 
 if __name__ == "__main__":
